@@ -19,23 +19,26 @@ app.post("/challenge", async (req, res) => {
       `https://api.polymarket.com/clob-auth/challenge?address=${address}`,
       {
         headers: {
-          "User-Agent": "Mozilla/5.0",
-          "Accept": "application/json",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+          "Accept": "application/json, text/plain, */*",
+          "Accept-Language": "en-US,en;q=0.9",
+          "Referer": "https://polymarket.com/",
+          "Origin": "https://polymarket.com",
+          "Connection": "keep-alive"
         }
       }
     );
 
     const text = await r.text();
 
-    // попытка парсинга
     try {
-      const j = JSON.parse(text);
-      return res.status(r.status).json(j);
+      const json = JSON.parse(text);
+      return res.status(r.status).json(json);
     } catch {
-      console.error("Challenge returned HTML:", text.slice(0, 200));
+      console.error("CF blocked challenge:", text.slice(0, 200));
       return res.status(502).json({
-        error: "challenge_not_json",
-        detail: "Polymarket returned HTML instead of JSON"
+        error: "cf_block",
+        detail: "Cloudflare returned HTML instead of JSON"
       });
     }
 
