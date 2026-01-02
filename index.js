@@ -16,16 +16,34 @@ app.post("/challenge", async (req, res) => {
     const { address } = req.body;
 
     const r = await fetch(
-      `https://api.polymarket.com/clob-auth/challenge?address=${address}`
+      `https://api.polymarket.com/clob-auth/challenge?address=${address}`,
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0",
+          "Accept": "application/json",
+        }
+      }
     );
 
-    const j = await r.json();
-    res.status(r.status).json(j);
+    const text = await r.text();
+
+    // попытка парсинга
+    try {
+      const j = JSON.parse(text);
+      return res.status(r.status).json(j);
+    } catch {
+      console.error("Challenge returned HTML:", text.slice(0, 200));
+      return res.status(502).json({
+        error: "challenge_not_json",
+        detail: "Polymarket returned HTML instead of JSON"
+      });
+    }
 
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
+
 
 app.post("/order", async (req, res) => {
   try {
