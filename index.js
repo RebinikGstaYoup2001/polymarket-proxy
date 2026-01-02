@@ -11,6 +11,21 @@ app.use((req, res, next) => {
   if (req.method === "OPTIONS") return res.end();
   next();
 });
+app.post("/challenge", async (req, res) => {
+  try {
+    const { address } = req.body;
+
+    const r = await fetch(
+      `https://api.polymarket.com/clob-auth/challenge?address=${address}`
+    );
+
+    const j = await r.json();
+    res.status(r.status).json(j);
+
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 app.post("/order", async (req, res) => {
   try {
