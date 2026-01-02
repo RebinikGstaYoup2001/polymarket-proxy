@@ -15,16 +15,33 @@ app.post("/challenge", async (req, res) => {
   try {
     const { address } = req.body;
 
+    //
+    // 1) Warm-up запрос — получаем cookies как браузер
+    //
+    const warm = await fetch("https://polymarket.com/", {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "Accept": "text/html,application/xhtml+xml",
+      }
+    });
+
+    const cookies = warm.headers.get("set-cookie") || "";
+
+    //
+    // 2) Запрашиваем challenge уже с cookie
+    //
     const r = await fetch(
       `https://api.polymarket.com/clob-auth/challenge?address=${address}`,
       {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
           "Accept": "application/json, text/plain, */*",
-          "Accept-Language": "en-US,en;q=0.9",
           "Referer": "https://polymarket.com/",
           "Origin": "https://polymarket.com",
-          "Connection": "keep-alive"
+          "Cookie": cookies,
+          "Sec-Fetch-Site": "same-origin",
+          "Sec-Fetch-Mode": "cors",
+          "Sec-Fetch-Dest": "empty",
         }
       }
     );
@@ -35,11 +52,8 @@ app.post("/challenge", async (req, res) => {
       const json = JSON.parse(text);
       return res.status(r.status).json(json);
     } catch {
-      console.error("CF blocked challenge:", text.slice(0, 200));
-      return res.status(502).json({
-        error: "cf_block",
-        detail: "Cloudflare returned HTML instead of JSON"
-      });
+      console.error("CF still blocked:", text.slice(0, 200));
+      return res.status(502).json({ error: "cf_block_2" });
     }
 
   } catch (e) {
